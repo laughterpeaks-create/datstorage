@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dandruff Severity Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #F1F4F0;
+    --paper-raised: #FBFCFA;
+    --ink: #1B2B26;
+    --ink-soft: #4A5D56;
+    --line: #D3DBD2;
+    --pine: #3D6B5C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  body{padding:48px 20px;}
+  .wrap{max-width:520px;margin:0 auto;}
+
+  h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(26px,5vw,34px);line-height:1.1;margin:0 0 10px;}
+  .lede{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0 0 32px;}
+
+  .index-bar{
+    display:flex;
+    gap:8px;
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:6px;
+    margin-bottom:40px;
+    position:sticky;
+    top:16px;
+    z-index:10;
+  }
+  .index-link{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    padding:10px 12px;
+    border-radius:4px;
+    transition:background .12s, color .12s;
+  }
+  .index-link:hover{background:var(--paper); color:var(--ink);}
+  .index-link.current{background:var(--pine); color:#fff;}
+
+  .tool-section{display:none;}
+  .tool-section.active{display:block;}
+
+  .card{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:28px;}
+
+  .field{margin-bottom:20px;}
+  .field:last-of-type{margin-bottom:0;}
+  label{display:block;font-size:14px;font-weight:600;margin-bottom:8px;}
+  select{
+    width:100%;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:14.5px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--paper) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%234A5D56" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat right 12px center;
+    appearance:none;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  select:focus{outline:2px solid var(--pine); outline-offset:1px;}
+
+  .calc-btn{
+    margin-top:24px;width:100%;padding:14px;font-size:14.5px;font-weight:600;
+    background:var(--ink);color:#fff;border:none;border-radius:4px;cursor:pointer;
+  }
+  .calc-btn:hover{background:var(--pine);}
+
+  .result{margin-top:24px;background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:28px;display:none;}
+  .result.show{display:block;}
+  .result-band{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin-bottom:6px;}
+  .result-score{font-size:13px;color:var(--ink-soft);margin-bottom:16px;}
+  .result p{font-size:14.5px;line-height:1.6;margin:0 0 14px;}
+  .result p:last-of-type{margin-bottom:0;}
+  .disclaimer{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-soft);line-height:1.6;}
+
+  .blog-form{display:flex;flex-direction:column;gap:14px;}
+  .blog-form textarea{
+    width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:14px;padding:11px 12px;
+    border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);
+    resize:vertical;min-height:90px;
+  }
+  .blog-form input[type="text"], .blog-form input[type="url"]{
+    width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:14.5px;padding:11px 12px;
+    border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink);
+  }
+  .blog-form input:focus, .blog-form textarea:focus{outline:2px solid var(--pine);outline-offset:1px;}
+
+  .blog-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:28px;}
+  @media (max-width:640px){.blog-grid{grid-template-columns:1fr;}}
+  .blog-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;}
+  .blog-card img{width:100%;height:170px;object-fit:cover;display:block;background:var(--paper);}
+  .blog-card-body{padding:18px 20px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .blog-card-date{font-size:11.5px;color:var(--ink-soft);letter-spacing:.03em;}
+  .blog-card-title{font-family:'Fraunces',serif;font-weight:600;font-size:18px;line-height:1.25;}
+  .blog-card-text{font-size:13.5px;color:var(--ink-soft);line-height:1.6;white-space:pre-wrap;}
+  .blog-card-remove{align-self:flex-start;margin-top:6px;font-size:12px;color:var(--brick);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;}
+  .blog-empty{color:var(--ink-soft);font-size:14px;padding:24px 0;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="index-bar">
+    <a class="index-link current" href="#severity" data-target="severity">Severity Calculator</a>
+    <a class="index-link" href="#finder" data-target="finder">Anti-Dandruff Shampoo Finder</a>
+    <a class="index-link" href="#diet" data-target="diet">Diet &amp; Dandruff Checker (Experimental)</a>
+    <a class="index-link" href="#blog" data-target="blog">Blog</a>
+  </div>
+
+  <div class="tool-section active" id="severity-section">
+
+  <h1 id="severity">Dandruff Severity Calculator</h1>
+  <p class="lede">Answer 5 quick questions and get an estimated severity reading, based on the categories dermatology studies use to grade dandruff.</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="q1">How much flaking do you see?</label>
+      <select id="q1">
+        <option value="0">None or barely any</option>
+        <option value="1">A little, mostly if I scratch</option>
+        <option value="2">Noticeable, most days</option>
+        <option value="3">Heavy, visible flakes constantly</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="q2">How itchy is your scalp?</label>
+      <select id="q2">
+        <option value="0">Not itchy</option>
+        <option value="1">Mildly, now and then</option>
+        <option value="2">Regularly itchy</option>
+        <option value="3">Intensely itchy</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="q3">Any redness or irritation?</label>
+      <select id="q3">
+        <option value="0">None</option>
+        <option value="1">Slight, in a spot or two</option>
+        <option value="2">Visible red patches</option>
+        <option value="3">Red, inflamed, sometimes sore</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="q4">How oily does your scalp get?</label>
+      <select id="q4">
+        <option value="1">Dry</option>
+        <option value="0">Normal</option>
+        <option value="2">Oily by end of day</option>
+        <option value="3">Very oily, even right after washing</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="q5">Does regular shampooing help?</label>
+      <select id="q5">
+        <option value="0">Yes, clears up well</option>
+        <option value="1">Somewhat, comes back fast</option>
+        <option value="2">Barely helps</option>
+        <option value="3">No difference at all</option>
+      </select>
+    </div>
+
+    <button class="calc-btn" id="calcBtn">Get my reading</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-band" id="resBand"></div>
+    <div class="result-score" id="resScore"></div>
+    <p id="resSummary"></p>
+    <p id="resNext"></p>
+    <div class="disclaimer">
+      This is a self-report estimate, not a medical diagnosis. Persistent redness, pain, or flaking that doesn't improve with regular anti-dandruff shampoo over several weeks is worth having a dermatologist look at.
+    </div>
+  </div>
+
+  </div>
+
+  <div class="tool-section" id="finder-section">
+
+  <h1 id="finder" style="margin-top:0;font-size:clamp(24px,4.5vw,30px);">Anti-Dandruff Shampoo Finder</h1>
+  <p class="lede">Pick the description closest to your scalp, and get the anti-dandruff ingredient that clinical studies back for that pattern — with the studies themselves listed underneath. <strong>Please consult a doctor or dermatologist before starting any new treatment.</strong></p>
+
+  <div class="card">
+    <div class="field">
+      <label for="q6">Which best describes your dandruff?</label>
+      <select id="q6">
+        <option value="dry">Dry, small, white flakes — scalp feels dry</option>
+        <option value="oily">Oily, yellowish flakes — scalp feels greasy</option>
+        <option value="stubborn">Keeps coming back no matter what shampoo I use</option>
+        <option value="inflamed">Red, itchy, sometimes sore — flaking is secondary</option>
+        <option value="thick">Thick, stubborn scale or plaque-like buildup</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="q7">How severe would you say it is?</label>
+      <select id="q7">
+        <option value="mild">Mild — occasional, minor flaking</option>
+        <option value="moderate">Moderate — regular, noticeable flaking</option>
+        <option value="severe">Severe — heavy, constant, hard to manage</option>
+      </select>
+    </div>
+
+    <button class="calc-btn" id="shampooBtn">Find my shampoo type</button>
+  </div>
+
+  <div class="result" id="shampooResult">
+    <div class="result-band" id="shampooBand"></div>
+    <p id="shampooSummary"></p>
+    <div id="shampooRefsWrap" style="margin-top:20px;">
+      <div style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;">References</div>
+      <ol id="shampooRefs" style="padding-left:18px;margin:0;font-size:13px;line-height:1.7;color:var(--ink-soft);"></ol>
+    </div>
+    <div class="disclaimer">
+      Ingredient concentrations and product availability vary by country. Check the label, and if you're pregnant, nursing, or on other scalp medications, run new active ingredients by a pharmacist or doctor first.
+    </div>
+  </div>
+
+  </div>
+
+  <div class="tool-section" id="diet-section">
+
+  <h1 id="diet" style="margin-top:0;font-size:clamp(24px,4.5vw,30px);">Diet &amp; Dandruff Checker <span style="font-family:'IBM Plex Sans',sans-serif;font-weight:500;font-size:14px;color:var(--ink-soft);">(Experimental tool — consult a doctor)</span></h1>
+  <p class="lede">Answer 5 questions about your eating habits. Some clinical studies have linked certain diet patterns to worse dandruff and seborrheic dermatitis flares — this checker weighs your answers against that research. Evidence here is still emerging and mixed, so treat this as a general indicator, not a diagnosis. <strong>Please consult a doctor or dietitian before making dietary changes.</strong></p>
+
+  <div class="card">
+    <div class="field">
+      <label for="d1">How often do you eat sugary or high-glycemic foods (white bread, pastries, soda, white rice)?</label>
+      <select id="d1">
+        <option value="0">Rarely</option>
+        <option value="1">A few times a week</option>
+        <option value="2">Most days</option>
+        <option value="3">Daily, multiple times</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="d2">How much dairy do you consume (milk, cheese, butter)?</label>
+      <select id="d2">
+        <option value="0">Little to none</option>
+        <option value="1">A little most days</option>
+        <option value="2">Regularly, several servings a day</option>
+        <option value="3">Heavy — dairy at most meals</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="d3">How often do you eat fried, processed, or fast food?</label>
+      <select id="d3">
+        <option value="0">Rarely</option>
+        <option value="1">Once or twice a week</option>
+        <option value="2">Several times a week</option>
+        <option value="3">Daily</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="d4">How much alcohol do you drink?</label>
+      <select id="d4">
+        <option value="0">Rarely or never</option>
+        <option value="1">1–2 drinks a week</option>
+        <option value="2">Several drinks a week</option>
+        <option value="3">Daily or near-daily</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="d5">How often do you eat omega-3-rich foods or vegetables (fatty fish, walnuts, flaxseed, leafy greens)?</label>
+      <select id="d5">
+        <option value="3">Daily</option>
+        <option value="2">A few times a week</option>
+        <option value="1">Occasionally</option>
+        <option value="0">Rarely or never</option>
+      </select>
+    </div>
+
+    <button class="calc-btn" id="dietBtn">Check my dietary pattern</button>
+  </div>
+
+  <div class="result" id="dietResult">
+    <div class="result-band" id="dietBand"></div>
+    <div class="result-score" id="dietScore"></div>
+    <p id="dietSummary"></p>
+    <div style="margin-top:20px;">
+      <div style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;">References</div>
+      <ol id="dietRefs" style="padding-left:18px;margin:0;font-size:13px;line-height:1.7;color:var(--ink-soft);"></ol>
+    </div>
+    <div class="disclaimer">
+      Diet's role in dandruff and seborrheic dermatitis is an active area of research, and findings are mixed — some studies find associations, others find none. This isn't a substitute for medical treatment. Talk to a doctor or dietitian before making significant dietary changes.
+    </div>
+  </div>
+
+  </div>
+
+  <div class="tool-section" id="blog-section">
+
+  <h1 id="blog" style="margin-top:0;font-size:clamp(24px,4.5vw,30px);">Blog</h1>
+  <p class="lede">Articles and updates, added by the owner. Visitors can read posts here — only the owner can publish or remove them.</p>
+
+  <div class="card" id="ownerLoginCard">
+    <div class="field" style="margin-bottom:14px;">
+      <label for="ownerPass">Owner login</label>
+      <input type="text" id="ownerPass" placeholder="Enter owner password" autocomplete="off">
+    </div>
+    <button class="calc-btn" id="ownerLoginBtn">Unlock posting</button>
+    <div id="ownerLoginError" style="display:none;color:var(--brick);font-size:12.5px;margin-top:10px;">Incorrect password.</div>
+  </div>
+
+  <div class="card blog-form" id="blogFormCard" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--pine);">Owner mode</span>
+      <button id="ownerLogoutBtn" style="background:none;border:none;color:var(--ink-soft);font-size:12px;text-decoration:underline;cursor:pointer;">Log out</button>
+    </div>
+    <div class="field">
+      <label for="bTitle">Title</label>
+      <input type="text" id="bTitle" placeholder="e.g. What finally worked for my dry scalp">
+    </div>
+    <div class="field">
+      <label for="bImage">Image URL <span style="font-weight:400;color:var(--ink-soft);">(optional)</span></label>
+      <input type="url" id="bImage" placeholder="https://example.com/photo.jpg">
+    </div>
+    <div class="field">
+      <label for="bContent">Article text</label>
+      <textarea id="bContent" placeholder="Write your post here..."></textarea>
+    </div>
+    <button class="calc-btn" id="blogAddBtn" style="margin-top:4px;">Publish post</button>
+  </div>
+
+  <div class="blog-grid" id="blogGrid"></div>
+  <div class="blog-empty" id="blogEmpty">No posts yet.</div>
+
+  <div class="method-note" style="margin-top:36px;">
+    <b>About owner access:</b> This is a static file with no server, so this login only hides the posting form from casual visitors — it isn't real security. Change the password by editing <code>OWNER_PASSWORD</code> near the bottom of this file's HTML source. Posts added through the form only last for this browser session; to make a post permanent, add it directly to the <code>blogPosts</code> array (search for "SAMPLE BLOG POSTS") in the source.
+  </div>
+
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.index-link').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = link.dataset.target;
+
+    document.querySelectorAll('.index-link').forEach(l => l.classList.remove('current'));
+    link.classList.add('current');
+
+    document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
+    document.getElementById(target + '-section').classList.add('active');
+
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+});
+
+function bandFor(pct){
+  if(pct <= 20) return {key:'clear', label:'Clear / Minimal', color:'#3D6B5C'};
+  if(pct <= 45) return {key:'mild', label:'Mild', color:'#7A8F3F'};
+  if(pct <= 70) return {key:'moderate', label:'Moderate', color:'#C1793E'};
+  return {key:'severe', label:'Severe', color:'#AE4A32'};
+}
+
+const summaries = {
+  clear: "Your answers suggest minimal to no active dandruff. Occasional dry patches are common and usually don't need dedicated treatment.",
+  mild: "This reads as mild dandruff — visible but manageable with a regular shampoo routine.",
+  moderate: "This reads as moderate dandruff. A targeted anti-dandruff shampoo, used consistently, is likely to help.",
+  severe: "This reads as severe. The itch and redness pattern here can overlap with seborrheic dermatitis rather than plain dry-scalp flaking — worth a dermatologist's read.",
+};
+
+const nextSteps = {
+  clear: "No specific treatment needed. Revisit this if flaking picks up.",
+  mild: "Look for a shampoo with zinc pyrithione or salicylic acid, used 2–3x a week.",
+  moderate: "Try a shampoo with ketoconazole or selenium sulfide, left on for the full recommended time. Consistency matters more than switching products often.",
+  severe: "A dermatologist can tell dandruff apart from seborrheic dermatitis or other scalp conditions and prescribe something stronger if needed.",
+};
+
+document.getElementById('calcBtn').addEventListener('click', () => {
+  const ids = ['q1','q2','q3','q4','q5'];
+  const sum = ids.reduce((s, id) => s + Number(document.getElementById(id).value), 0);
+  const max = ids.length * 3;
+  const pct = Math.round((sum / max) * 100);
+  const band = bandFor(pct);
+
+  document.getElementById('resBand').textContent = band.label;
+  document.getElementById('resBand').style.color = band.color;
+  document.getElementById('resScore').textContent = `Score: ${pct} / 100`;
+  document.getElementById('resSummary').textContent = summaries[band.key];
+  document.getElementById('resNext').textContent = nextSteps[band.key];
+
+  const result = document.getElementById('result');
+  result.classList.add('show');
+  result.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+const shampooData = {
+  dry: {
+    ingredient: "Zinc pyrithione",
+    summary: "Dry, small, white flakes with an otherwise dry scalp respond well to zinc pyrithione (ZPT) shampoos, used 2–3x a week. Research has shown it works partly by repairing the disrupted skin-barrier structure seen on dandruff-affected scalp, not just by killing the yeast associated with flaking.",
+    refs: [
+      { t: "Warner RR, Schwartz JR, Boissy Y, Dawson TL. Dandruff has an altered stratum corneum ultrastructure that is improved with zinc pyrithione shampoo.", s: "Journal of the American Academy of Dermatology, 2001", u: "https://www.jaad.org/article/0190-9622(90)70140-D/fulltext" },
+      { t: "Pierard-Franchimont C, et al. A comparison of 1% ketoconazole, 1% piroctone olamine and 1% zinc pyrithione formulations.", s: "International Journal of Cosmetic Science, 2002", u: "https://www.cochranelibrary.com/central/doi/10.1002/central/CN-00434748" },
+    ]
+  },
+  oily: {
+    ingredient: "Selenium sulfide",
+    summary: "Oily, yellowish flakes on a greasy scalp point to a more oil-driven pattern. Selenium sulfide shampoos slow skin-cell turnover and have shown strong keratolytic and yeast-suppressing activity, and are typically recommended when oiliness is a bigger factor than dryness.",
+    refs: [
+      { t: "Safety, Efficacy and Attributes of 2.5% Selenium Sulfide Shampoo in the Treatment of Dandruff: A Single-Center Study.", s: "PMC (National Library of Medicine), 2024", u: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11055963/" },
+      { t: "Neumann PB, Coffindaffer TW, Cothran PE, et al. Clinical investigation comparing 1% selenium sulfide and 2% ketoconazole shampoos for dandruff control.", s: "Cosmetic Dermatology, 1996", u: "https://headandshoulders.com/en-us/healthy-hair-and-scalp/dandruff/anti-dandruff-ingredient-review" },
+    ]
+  },
+  stubborn: {
+    ingredient: "Ketoconazole 2%",
+    summary: "If dandruff keeps returning despite regular use of a standard anti-dandruff shampoo, ketoconazole 2% is the ingredient with the strongest head-to-head evidence for tougher, recurring cases — it's an antifungal that targets the Malassezia yeast linked to dandruff more directly than zinc pyrithione.",
+    refs: [
+      { t: "A multicenter randomized trial of ketoconazole 2% and zinc pyrithione 1% shampoos in severe dandruff and seborrheic dermatitis.", s: "PubMed, 2002", u: "https://pubmed.ncbi.nlm.nih.gov/12476017/" },
+      { t: "Danby FW, Maddin WS, Margesson LJ, Rosenthal D. A randomized, double-blind, placebo-controlled trial of ketoconazole 2% shampoo versus selenium sulfide 2.5% shampoo in the treatment of moderate to severe dandruff.", s: "Journal of the American Academy of Dermatology, 1993", u: "https://www.cochranelibrary.com/central/doi/10.1002/central/CN-00434748" },
+    ]
+  },
+  inflamed: {
+    ingredient: "Ciclopirox olamine",
+    summary: "Redness and itch alongside flaking looks closer to seborrheic dermatitis than plain dandruff. Ciclopirox olamine shampoos have been tested specifically for this inflamed pattern and compare favorably with ketoconazole, with the added benefit of anti-inflammatory action alongside its antifungal effect.",
+    refs: [
+      { t: "Ratnavel RC, Squire RA, Boorman GC. Clinical efficacies of shampoos containing ciclopirox olamine (1.5%) and ketoconazole (2.0%) in the treatment of seborrhoeic dermatitis.", s: "Journal of Dermatological Treatment, 2007", u: "https://us.typology.com/library/which-active-ingredients-can-act-against-dandruff" },
+      { t: "Rosenman D, et al. A double-blind, placebo-controlled trial of a ciclopirox olamine 1% shampoo for the treatment of scalp seborrheic dermatitis.", s: "Journal of Dermatological Treatment, 2000", u: "https://us.typology.com/library/which-active-ingredients-can-act-against-dandruff" },
+    ]
+  },
+  thick: {
+    ingredient: "Salicylic acid (often paired with an antifungal)",
+    summary: "Thick, plaque-like scale needs to be broken down before an antifungal can even reach the scalp surface. Salicylic acid works as a keratolytic to loosen that buildup, but studies note it's often insufficient alone — it's typically paired with ciclopirox olamine, piroctone olamine, or selenium sulfide for the actual anti-yeast effect.",
+    refs: [
+      { t: "Walker AP, et al. The effects of salicylic acid on dandruff.", s: "Cited in Typology ingredient review", u: "https://us.typology.com/library/which-active-ingredients-can-act-against-dandruff" },
+      { t: "Comparative clinical trial of shampoos containing ciclopirox olamine (1.5%) and salicylic acid (3%), or ketoconazole (2%) for dandruff/seborrhoeic dermatitis.", s: "Journal of Dermatological Treatment, 2002", u: "https://us.typology.com/library/which-active-ingredients-can-act-against-dandruff" },
+    ]
+  },
+};
+
+const usageBySeverity = {
+  mild: "At this level, using it about twice a week is usually enough to keep flaking under control.",
+  moderate: "Use it 3 times a week and leave it on for 3–5 minutes before rinsing, so the active ingredient has contact time to actually work.",
+  severe: "Consider daily use for the first 1–2 weeks, then taper down to 2–3x a week once it settles. If it's not improving, a dermatologist can offer something stronger.",
+};
+
+document.getElementById('shampooBtn').addEventListener('click', () => {
+  const type = document.getElementById('q6').value;
+  const severity = document.getElementById('q7').value;
+  const data = shampooData[type];
+
+  document.getElementById('shampooBand').textContent = data.ingredient;
+  document.getElementById('shampooSummary').textContent = data.summary + ' ' + usageBySeverity[severity];
+
+  const refsList = document.getElementById('shampooRefs');
+  refsList.innerHTML = '';
+  data.refs.forEach(ref => {
+    const li = document.createElement('li');
+    li.style.marginBottom = '8px';
+    li.innerHTML = `${ref.t} <em>${ref.s}.</em> <a href="${ref.u}" target="_blank" rel="noopener" style="color:var(--pine);">Source</a>`;
+    refsList.appendChild(li);
+  });
+
+  const result = document.getElementById('shampooResult');
+  result.classList.add('show');
+  result.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+const dietRefs = [
+  { t: "Association Between Diet and Seborrheic Dermatitis: A Case-Control Study.", s: "PMC (National Library of Medicine), 2023", u: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10719884/" },
+  { t: "Nutrition, Obesity, and Seborrheic Dermatitis: A Systematic Review.", s: "PMC (National Library of Medicine), 2024", u: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11333864/" },
+  { t: "Nutrition, Obesity, and Anxiety Can Impact the Severity of Seborrheic Dermatitis — coverage of a Turkish cohort study finding higher bread, margarine, animal fat, and sugar intake among moderate-to-severe cases.", s: "Dermatology Times, 2026", u: "https://www.dermatologytimes.com/view/nutrition-obesity-and-anxiety-can-impact-the-severity-of-seborrheic-dermatitis" },
+  { t: "Bett DG, Morland J, Yudkin J. Sugar consumption in acne vulgaris and seborrhoeic dermatitis.", s: "British Medical Journal — cited in: Relationship between diet and seborrheic dermatitis", u: "https://pdfs.semanticscholar.org/8b0a/5d8d9179a2390d52f8504c2f962372d6afb2.pdf" },
+];
+
+function dietBandFor(pct){
+  if(pct <= 25) return {key:'clear', label:'Low dietary contribution likely', color:'#3D6B5C'};
+  if(pct <= 50) return {key:'mild', label:'Some dietary contribution possible', color:'#7A8F3F'};
+  if(pct <= 75) return {key:'moderate', label:'Moderate dietary contribution likely', color:'#C1793E'};
+  return {key:'severe', label:'Higher dietary contribution likely', color:'#AE4A32'};
+}
+
+const dietSummaries = {
+  clear: "Your eating pattern leans toward lower-glycemic, lower-dairy, higher omega-3 choices. Studies haven't found diet to be a major driver at this pattern — your dandruff, if present, is more likely coming from other factors like yeast levels, oil production, or product use.",
+  mild: "There's a moderate amount of sugar, dairy, or processed food in your pattern. Some research links these to increased sebum and mild inflammation, which can feed the yeast associated with dandruff — worth keeping an eye on if flaking is persistent.",
+  moderate: "Your pattern includes a fair amount of high-glycemic food, dairy, or fried/processed items, and less omega-3 intake. Several studies associate this combination with more sebum production and inflammation, both linked to worse flaking.",
+  severe: "Your pattern scores high on sugar, dairy, fried/processed food, and alcohol, with low omega-3 intake. This combination shows up repeatedly in the research as associated with more severe seborrheic dermatitis — though it's one factor among several, not a guaranteed cause.",
+};
+
+document.getElementById('dietBtn').addEventListener('click', () => {
+  const ids = ['d1','d2','d3','d4','d5'];
+  const sum = ids.reduce((s, id) => s + Number(document.getElementById(id).value), 0);
+  const max = ids.length * 3;
+  const pct = Math.round((sum / max) * 100);
+  const band = dietBandFor(pct);
+
+  document.getElementById('dietBand').textContent = band.label;
+  document.getElementById('dietBand').style.color = band.color;
+  document.getElementById('dietScore').textContent = `Dietary risk score: ${pct} / 100`;
+  document.getElementById('dietSummary').textContent = dietSummaries[band.key];
+
+  const refsList = document.getElementById('dietRefs');
+  refsList.innerHTML = '';
+  dietRefs.forEach(ref => {
+    const li = document.createElement('li');
+    li.style.marginBottom = '8px';
+    li.innerHTML = `${ref.t} <em>${ref.s}.</em> <a href="${ref.u}" target="_blank" rel="noopener" style="color:var(--pine);">Source</a>`;
+    refsList.appendChild(li);
+  });
+
+  const result = document.getElementById('dietResult');
+  result.classList.add('show');
+  result.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+// ===== SAMPLE BLOG POSTS =====
+// To add a permanent post, copy an object below, edit the fields, and add it to the array.
+// title: post headline. image: URL to a photo (leave "" for no image). date: any display string. text: the article body.
+let blogPosts = [
+  {
+    title: "Starting point: what dandruff actually is",
+    image: "",
+    date: "Aug 2026",
+    text: "A quick note for this blog: dandruff is generally linked to a yeast called Malassezia, oil production, and skin cell turnover — not poor hygiene. Worth remembering before trying any new routine."
+  },
+];
+
+// ===== OWNER ACCESS =====
+// Change this to set your own posting password. This is a client-side check only —
+// anyone who reads this file's source can see it, so treat it as a casual gate, not real security.
+const OWNER_PASSWORD = "dandruff-owner";
+let isOwner = false;
+
+function renderBlog(){
+  const grid = document.getElementById('blogGrid');
+  const empty = document.getElementById('blogEmpty');
+  grid.innerHTML = '';
+
+  if(blogPosts.length === 0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  blogPosts.forEach((post, i) => {
+    const card = document.createElement('div');
+    card.className = 'blog-card';
+    card.innerHTML = `
+      ${post.image ? `<img src="${post.image}" alt="${post.title}" onerror="this.style.display='none'">` : ''}
+      <div class="blog-card-body">
+        <div class="blog-card-date">${post.date}</div>
+        <div class="blog-card-title">${post.title}</div>
+        <div class="blog-card-text">${post.text}</div>
+        ${isOwner ? `<button class="blog-card-remove" data-index="${i}">Remove</button>` : ''}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  if(isOwner){
+    grid.querySelectorAll('.blog-card-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        blogPosts.splice(Number(btn.dataset.index), 1);
+        renderBlog();
+      });
+    });
+  }
+}
+
+document.getElementById('ownerLoginBtn').addEventListener('click', () => {
+  const entered = document.getElementById('ownerPass').value;
+  if(entered === OWNER_PASSWORD){
+    isOwner = true;
+    document.getElementById('ownerLoginCard').style.display = 'none';
+    document.getElementById('blogFormCard').style.display = 'flex';
+    document.getElementById('ownerLoginError').style.display = 'none';
+    document.getElementById('ownerPass').value = '';
+    renderBlog();
+  } else {
+    document.getElementById('ownerLoginError').style.display = 'block';
+  }
+});
+
+document.getElementById('ownerLogoutBtn').addEventListener('click', () => {
+  isOwner = false;
+  document.getElementById('blogFormCard').style.display = 'none';
+  document.getElementById('ownerLoginCard').style.display = 'block';
+  renderBlog();
+});
+
+document.getElementById('blogAddBtn').addEventListener('click', () => {
+  const title = document.getElementById('bTitle').value.trim();
+  const image = document.getElementById('bImage').value.trim();
+  const text = document.getElementById('bContent').value.trim();
+
+  if(!title || !text){
+    alert('Add a title and some article text before publishing.');
+    return;
+  }
+
+  blogPosts.unshift({
+    title,
+    image,
+    date: new Date().toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}),
+    text
+  });
+
+  document.getElementById('bTitle').value = '';
+  document.getElementById('bImage').value = '';
+  document.getElementById('bContent').value = '';
+
+  renderBlog();
+});
+
+renderBlog();
+</script>
+</body>
+</html>
